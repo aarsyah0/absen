@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CheckinScreen extends StatefulWidget {
   final String token;
@@ -21,6 +22,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
   Uint8List? _webPhotoBytes;
   String? _webPhotoName;
   bool _isLoading = false;
+  GoogleMapController? _mapController;
+
+  LatLng? get _latLng =>
+      _position != null ? LatLng(_position!.latitude, _position!.longitude) : null;
 
   Future<void> _getLocation() async {
     try {
@@ -52,6 +57,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
       setState(() {
         _position = pos;
       });
+      if (!kIsWeb && _mapController != null && _latLng != null) {
+        _mapController!.animateCamera(CameraUpdate.newLatLng(_latLng!));
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengambil lokasi: $e')),
@@ -138,46 +146,111 @@ class _CheckinScreenState extends State<CheckinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Check-in')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ElevatedButton.icon(
-              onPressed: _getLocation,
-              icon: const Icon(Icons.my_location),
-              label: Text(_position == null ? 'Ambil Lokasi' : 'Lokasi Terdeteksi'),
-            ),
-            if (_position != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text('Lat: ${_position!.latitude}, Lng: ${_position!.longitude}'),
-              ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _pickPhoto,
-              icon: const Icon(Icons.camera_alt),
-              label: Text(!_isPhotoReady() ? 'Ambil Foto' : 'Foto Diambil'),
-            ),
-            if (_isPhotoReady())
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: kIsWeb
-                    ? Image.memory(_webPhotoBytes!, height: 120)
-                    : Image.file(_photo!, height: 120),
-              ),
-            const Spacer(),
+      body: Column(
+        children: [
+          if (!kIsWeb)
             SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: (_position != null && _isPhotoReady() && !_isLoading) ? _submitCheckin : null,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Check-in'),
+              height: 300,
+              child: _latLng == null
+                  ? const Center(child: Text('Lokasi belum diambil'))
+                  : GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: _latLng!,
+                        zoom: 17,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId('me'),
+                          position: _latLng!,
+                          infoWindow: const InfoWindow(title: 'Lokasi Anda'),
+                        ),
+                      },
+                      onMapCreated: (controller) => _mapController = controller,
+                      myLocationEnabled: true,
+                    ),
+            ),
+          if (kIsWeb)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _getLocation,
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('Ambil Lokasi'),
+                  ),
+                  const SizedBox(height: 8),
+                  _position == null
+                      ? const Text('Lokasi: belum diambil')
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Lat: ${_position!.latitude}, Lng: ${_position!.longitude}'),
+                            if (_position!.latitude == 0.0 && _position!.longitude == 0.0)
+                              const Text(
+                                'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          ],
+                        ),
+                ],
               ),
             ),
-          ],
-        ),
+          if (!kIsWeb)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _getLocation,
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('GPS'),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _position == null
+                        ? const Text('Lokasi: belum diambil')
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Lat: ${_position!.latitude}, Lng: ${_position!.longitude}'),
+                              if (_position!.latitude == 0.0 && _position!.longitude == 0.0)
+                                const Text(
+                                  'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: _pickPhoto,
+            icon: const Icon(Icons.camera_alt),
+            label: Text(!_isPhotoReady() ? 'Ambil Foto' : 'Foto Diambil'),
+          ),
+          if (_isPhotoReady())
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: kIsWeb
+                  ? Image.memory(_webPhotoBytes!, height: 120)
+                  : Image.file(_photo!, height: 120),
+            ),
+          const Spacer(),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: (_position != null && _isPhotoReady() && !_isLoading) ? _submitCheckin : null,
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Check-in'),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
