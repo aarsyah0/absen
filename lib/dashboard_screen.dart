@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'izin_screen.dart';
+import 'riwayat_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String userName;
@@ -26,6 +27,20 @@ class DashboardScreen extends StatelessWidget {
       return jsonDecode(response.body)['data'] ?? {};
     } else {
       throw Exception('Gagal mengambil status absensi');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchLastActivities(String token) async {
+    final url = Uri.parse('http://localhost:8000/api/employee/attendance/history?length=3&start=0');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'] as List<dynamic>;
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Gagal mengambil aktivitas');
     }
   }
 
@@ -130,14 +145,14 @@ class DashboardScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CheckoutScreen(),
+                            builder: (context) => CheckoutScreen(token: token),
                           ),
                         );
                       },
                       child: _ActionButton(
                         icon: Icons.logout,
                         label: 'Check-out',
-                        color: const Color(0xFFB2B8FF),
+                        color: const Color.fromARGB(255, 140, 150, 254),
                       ),
                     ),
                     GestureDetector(
@@ -145,15 +160,15 @@ class DashboardScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const IzinScreen(),
+                            builder: (context) => IzinScreen(token: token),
                           ),
                         );
                       },
                       child: _ActionButton(
                         icon: Icons.assignment_turned_in_outlined,
                         label: 'Izin',
-                        color: const Color(0xFFB2F7EF),
-                        iconColor: const Color(0xFF1BCFB4),
+                        color: const Color.fromARGB(255, 16, 171, 148),
+                        iconColor: const Color.fromARGB(255, 16, 171, 148),
                       ),
                     ),
                   ],
@@ -339,14 +354,24 @@ class DashboardScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       'Aktivitas Terakhir',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      'Lihat Semua',
-                      style: TextStyle(color: Color(0xFF4F8DFD), fontSize: 13),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RiwayatScreen(token: token),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Lihat Semua',
+                        style: TextStyle(color: Color(0xFF4F8DFD), fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
@@ -354,30 +379,42 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: const [
-                    _ActivityTile(
-                      icon: Icons.login,
-                      title: 'Check-in',
-                      subtitle: 'Hari ini, 08:30 WIB',
-                      status: 'Sukses',
-                      statusColor: Color(0xFF1BCFB4),
-                    ),
-                    _ActivityTile(
-                      icon: Icons.logout,
-                      title: 'Check-out',
-                      subtitle: 'Kemarin, 17:35 WIB',
-                      status: 'Sukses',
-                      statusColor: Color(0xFF1BCFB4),
-                    ),
-                    _ActivityTile(
-                      icon: Icons.login,
-                      title: 'Check-in',
-                      subtitle: 'Kemarin, 08:27 WIB',
-                      status: 'Sukses',
-                      statusColor: Color(0xFF1BCFB4),
-                    ),
-                  ],
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchLastActivities(token),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Text('Gagal memuat aktivitas');
+                    }
+                    final activities = snapshot.data ?? [];
+                    if (activities.isEmpty) {
+                      return const Text('Belum ada aktivitas');
+                    }
+                    return Column(
+                      children: activities.map((item) {
+                        final type = item['type'];
+                        final icon = type == 'in' ? Icons.login : Icons.logout;
+                        final title = type == 'in' ? 'Check-in' : 'Check-out';
+                        final date = item['date'] ?? '';
+                        final time = item['time'] ?? '';
+                        final status = item['status'] ?? '-';
+                        final statusColor = status == 'accepted'
+                            ? const Color(0xFF1BCFB4)
+                            : (status == 'pending'
+                                ? const Color(0xFFFFC542)
+                                : const Color(0xFFE57373));
+                        return _ActivityTile(
+                          icon: icon,
+                          title: title,
+                          subtitle: '$date, $time WIB',
+                          status: status[0].toUpperCase() + status.substring(1),
+                          statusColor: statusColor,
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
@@ -458,6 +495,19 @@ class DashboardScreen extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
         type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 0) return; // stay on Dashboard
+          if (index == 2) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RiwayatScreen(token: token),
+              ),
+              (route) => false,
+            );
+          }
+          // Tambahkan navigasi ke halaman lain jika ada (Absensi, Profil)
+        },
       ),
     );
   }
