@@ -388,7 +388,11 @@ class DashboardScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RiwayatScreen(token: token),
+                            builder:
+                                (context) => RiwayatScreen(
+                                  userName: userName,
+                                  token: token,
+                                ),
                           ),
                         );
                       },
@@ -550,7 +554,9 @@ class DashboardScreen extends StatelessWidget {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => RiwayatScreen(token: token),
+                builder:
+                    (context) =>
+                        RiwayatScreen(userName: userName, token: token),
               ),
               (route) => false,
             );

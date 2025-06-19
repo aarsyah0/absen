@@ -550,7 +550,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RiwayatScreen(token: widget.token),
+                    builder:
+                        (context) =>
+                            RiwayatScreen(userName: name, token: widget.token),
                   ),
                   (route) => false,
                 );
