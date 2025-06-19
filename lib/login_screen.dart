@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'register_screen.dart';
 import 'dashboard_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -51,7 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => DashboardScreen(userName: userName, token: token),
+              builder:
+                  (context) =>
+                      DashboardScreen(userName: userName, token: token),
             ),
           );
         }
@@ -78,10 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<String> fetchUserNameByToken(String token) async {
     final url = Uri.parse('http://localhost:8000/api/user-by-token/$token');
-    final response = await http.get(url, headers: {
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-    });
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['data']?['name'] ?? '';

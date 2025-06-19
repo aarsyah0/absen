@@ -31,7 +31,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Future<List<Map<String, dynamic>>> fetchLastActivities(String token) async {
-    final url = Uri.parse('http://localhost:8000/api/employee/attendance/history?length=3&start=0');
+    final url = Uri.parse(
+      'http://localhost:8000/api/employee/attendance/history?length=3&start=0',
+    );
     final response = await http.get(
       url,
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
@@ -370,7 +372,10 @@ class DashboardScreen extends StatelessWidget {
                       },
                       child: const Text(
                         'Lihat Semua',
-                        style: TextStyle(color: Color(0xFF4F8DFD), fontSize: 13),
+                        style: TextStyle(
+                          color: Color(0xFF4F8DFD),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -393,26 +398,31 @@ class DashboardScreen extends StatelessWidget {
                       return const Text('Belum ada aktivitas');
                     }
                     return Column(
-                      children: activities.map((item) {
-                        final type = item['type'];
-                        final icon = type == 'in' ? Icons.login : Icons.logout;
-                        final title = type == 'in' ? 'Check-in' : 'Check-out';
-                        final date = item['date'] ?? '';
-                        final time = item['time'] ?? '';
-                        final status = item['status'] ?? '-';
-                        final statusColor = status == 'accepted'
-                            ? const Color(0xFF1BCFB4)
-                            : (status == 'pending'
-                                ? const Color(0xFFFFC542)
-                                : const Color(0xFFE57373));
-                        return _ActivityTile(
-                          icon: icon,
-                          title: title,
-                          subtitle: '$date, $time WIB',
-                          status: status[0].toUpperCase() + status.substring(1),
-                          statusColor: statusColor,
-                        );
-                      }).toList(),
+                      children:
+                          activities.map((item) {
+                            final type = item['type'];
+                            final icon =
+                                type == 'in' ? Icons.login : Icons.logout;
+                            final title =
+                                type == 'in' ? 'Check-in' : 'Check-out';
+                            final date = item['date'] ?? '';
+                            final time = item['time'] ?? '';
+                            final status = item['status'] ?? '-';
+                            final statusColor =
+                                status == 'accepted'
+                                    ? const Color(0xFF1BCFB4)
+                                    : (status == 'pending'
+                                        ? const Color(0xFFFFC542)
+                                        : const Color(0xFFE57373));
+                            return _ActivityTile(
+                              icon: icon,
+                              title: title,
+                              subtitle: '$date, $time WIB',
+                              status:
+                                  status[0].toUpperCase() + status.substring(1),
+                              statusColor: statusColor,
+                            );
+                          }).toList(),
                     );
                   },
                 ),

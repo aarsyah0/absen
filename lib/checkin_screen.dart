@@ -1,12 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:io';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class CheckinScreen extends StatefulWidget {
   final String token;
@@ -25,7 +26,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
   GoogleMapController? _mapController;
 
   LatLng? get _latLng =>
-      _position != null ? LatLng(_position!.latitude, _position!.longitude) : null;
+      _position != null
+          ? LatLng(_position!.latitude, _position!.longitude)
+          : null;
 
   Future<void> _getLocation() async {
     try {
@@ -41,9 +44,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Izin lokasi ditolak!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak!')));
           return;
         }
       }
@@ -53,7 +56,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
         );
         return;
       }
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
       setState(() {
         _position = pos;
       });
@@ -61,16 +66,18 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _mapController!.animateCamera(CameraUpdate.newLatLng(_latLng!));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil lokasi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil lokasi: $e')));
     }
   }
 
   Future<void> _pickPhoto() async {
     try {
       if (kIsWeb) {
-        final result = await FilePicker.platform.pickFiles(type: FileType.image);
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+        );
         if (result != null && result.files.single.bytes != null) {
           setState(() {
             _webPhotoBytes = result.files.single.bytes;
@@ -79,7 +86,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
         }
       } else {
         final picker = ImagePicker();
-        final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 70);
+        final picked = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 70,
+        );
         if (picked != null) {
           setState(() {
             _photo = File(picked.path);
@@ -87,26 +97,37 @@ class _CheckinScreenState extends State<CheckinScreen> {
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil foto: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil foto: $e')));
     }
   }
 
   Future<void> _submitCheckin() async {
     if (_position == null || (!_isPhotoReady())) return;
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     final token = widget.token;
     final uri = Uri.parse('http://localhost:8000/api/employee/attendance');
-    final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $token'
-      ..fields['type'] = 'in'
-      ..fields['latitude'] = _position!.latitude.toString()
-      ..fields['longitude'] = _position!.longitude.toString();
+    final request =
+        http.MultipartRequest('POST', uri)
+          ..headers['Authorization'] = 'Bearer $token'
+          ..fields['type'] = 'in'
+          ..fields['latitude'] = _position!.latitude.toString()
+          ..fields['longitude'] = _position!.longitude.toString();
     if (kIsWeb && _webPhotoBytes != null && _webPhotoName != null) {
-      request.files.add(http.MultipartFile.fromBytes('photo', _webPhotoBytes!, filename: _webPhotoName));
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo',
+          _webPhotoBytes!,
+          filename: _webPhotoName,
+        ),
+      );
     } else if (_photo != null) {
-      request.files.add(await http.MultipartFile.fromPath('photo', _photo!.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('photo', _photo!.path),
+      );
     }
     try {
       final streamed = await request.send();
@@ -126,11 +147,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Terjadi kesalahan.')));
     } finally {
-      if (mounted) setState(() { _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+        });
     }
   }
 
@@ -151,23 +175,25 @@ class _CheckinScreenState extends State<CheckinScreen> {
           if (!kIsWeb)
             SizedBox(
               height: 300,
-              child: _latLng == null
-                  ? const Center(child: Text('Lokasi belum diambil'))
-                  : GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _latLng!,
-                        zoom: 17,
-                      ),
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('me'),
-                          position: _latLng!,
-                          infoWindow: const InfoWindow(title: 'Lokasi Anda'),
+              child:
+                  _latLng == null
+                      ? const Center(child: Text('Lokasi belum diambil'))
+                      : GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: _latLng!,
+                          zoom: 17,
                         ),
-                      },
-                      onMapCreated: (controller) => _mapController = controller,
-                      myLocationEnabled: true,
-                    ),
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('me'),
+                            position: _latLng!,
+                            infoWindow: const InfoWindow(title: 'Lokasi Anda'),
+                          ),
+                        },
+                        onMapCreated:
+                            (controller) => _mapController = controller,
+                        myLocationEnabled: true,
+                      ),
             ),
           if (kIsWeb)
             Padding(
@@ -184,22 +210,28 @@ class _CheckinScreenState extends State<CheckinScreen> {
                   _position == null
                       ? const Text('Lokasi: belum diambil')
                       : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Lat: ${_position!.latitude}, Lng: ${_position!.longitude}'),
-                            if (_position!.latitude == 0.0 && _position!.longitude == 0.0)
-                              const Text(
-                                'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                          ],
-                        ),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Lat: ${_position!.latitude}, Lng: ${_position!.longitude}',
+                          ),
+                          if (_position!.latitude == 0.0 &&
+                              _position!.longitude == 0.0)
+                            const Text(
+                              'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                        ],
+                      ),
                 ],
               ),
             ),
           if (!kIsWeb)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 16,
+              ),
               child: Row(
                 children: [
                   ElevatedButton.icon(
@@ -209,19 +241,23 @@ class _CheckinScreenState extends State<CheckinScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _position == null
-                        ? const Text('Lokasi: belum diambil')
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Lat: ${_position!.latitude}, Lng: ${_position!.longitude}'),
-                              if (_position!.latitude == 0.0 && _position!.longitude == 0.0)
-                                const Text(
-                                  'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
-                                  style: TextStyle(color: Colors.red),
+                    child:
+                        _position == null
+                            ? const Text('Lokasi: belum diambil')
+                            : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Lat: ${_position!.latitude}, Lng: ${_position!.longitude}',
                                 ),
-                            ],
-                          ),
+                                if (_position!.latitude == 0.0 &&
+                                    _position!.longitude == 0.0)
+                                  const Text(
+                                    'Lokasi belum didapatkan, silakan klik tombol GPS dan pastikan GPS aktif.',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                              ],
+                            ),
                   ),
                 ],
               ),
@@ -235,18 +271,23 @@ class _CheckinScreenState extends State<CheckinScreen> {
           if (_isPhotoReady())
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: kIsWeb
-                  ? Image.memory(_webPhotoBytes!, height: 120)
-                  : Image.file(_photo!, height: 120),
+              child:
+                  kIsWeb
+                      ? Image.memory(_webPhotoBytes!, height: 120)
+                      : Image.file(_photo!, height: 120),
             ),
           const Spacer(),
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: (_position != null && _isPhotoReady() && !_isLoading) ? _submitCheckin : null,
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Check-in'),
+              onPressed:
+                  (_position != null && _isPhotoReady() && !_isLoading)
+                      ? _submitCheckin
+                      : null,
+              child:
+                  _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Check-in'),
             ),
           ),
           const SizedBox(height: 16),
