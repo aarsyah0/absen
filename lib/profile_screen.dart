@@ -513,17 +513,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           bottomNavigationBar: BottomNavigationBar(
-            currentIndex: 3,
+            currentIndex: 2,
             selectedItemColor: const Color(0xFF4F8DFD),
             unselectedItemColor: Colors.black38,
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_rounded),
                 label: 'Beranda',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.fingerprint),
-                label: 'Absensi',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.history),
@@ -536,7 +532,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
             type: BottomNavigationBarType.fixed,
             onTap: (index) {
-              if (index == 3) return;
+              if (index == 2) return;
               if (index == 0) {
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -550,7 +546,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   (route) => false,
                 );
               }
-              if (index == 2) {
+              if (index == 1) {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(

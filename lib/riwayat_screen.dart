@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:absen/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -435,7 +436,7 @@ class _RiwayatScreenState extends State<RiwayatScreen>
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
+        currentIndex: 1,
         selectedItemColor: const Color(0xFF4F8DFD),
         unselectedItemColor: Colors.black38,
         items: const [
@@ -443,16 +444,12 @@ class _RiwayatScreenState extends State<RiwayatScreen>
             icon: Icon(Icons.home_rounded),
             label: 'Beranda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fingerprint),
-            label: 'Absensi',
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 2) return; // stay on Riwayat
+          if (index == 1) return; // stay on Riwayat
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
@@ -460,6 +457,15 @@ class _RiwayatScreenState extends State<RiwayatScreen>
                 builder:
                     (context) =>
                         DashboardScreen(userName: '', token: widget.token),
+              ),
+              (route) => false,
+            );
+          }
+          if (index == 2) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileScreen(token: widget.token),
               ),
               (route) => false,
             );
