@@ -9,7 +9,9 @@ import 'dashboard_screen.dart';
 
 class RiwayatScreen extends StatefulWidget {
   final String token;
-  const RiwayatScreen({Key? key, required this.token}) : super(key: key);
+  final String userName;
+  const RiwayatScreen({Key? key, required this.token, required this.userName})
+    : super(key: key);
 
   @override
   State<RiwayatScreen> createState() => _RiwayatScreenState();
@@ -241,7 +243,7 @@ class _RiwayatScreenState extends State<RiwayatScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Riwayat'),
+        title: Text('Riwayat - ${widget.userName}'),
         backgroundColor: const Color(0xFF4F8DFD),
         elevation: 0,
         bottom: PreferredSize(
@@ -455,8 +457,10 @@ class _RiwayatScreenState extends State<RiwayatScreen>
               context,
               MaterialPageRoute(
                 builder:
-                    (context) =>
-                        DashboardScreen(userName: '', token: widget.token),
+                    (context) => DashboardScreen(
+                      userName: widget.userName,
+                      token: widget.token,
+                    ),
               ),
               (route) => false,
             );
