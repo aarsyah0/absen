@@ -7,8 +7,8 @@ import 'package:intl/intl.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'izin_screen.dart';
-import 'riwayat_screen.dart';
 import 'profile_screen.dart';
+import 'riwayat_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String userName;
@@ -540,17 +540,13 @@ class DashboardScreen extends StatelessWidget {
             icon: Icon(Icons.home_rounded),
             label: 'Beranda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fingerprint),
-            label: 'Absensi',
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
           if (index == 0) return; // stay on Dashboard
-          if (index == 2) {
+          if (index == 1) {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
@@ -559,7 +555,7 @@ class DashboardScreen extends StatelessWidget {
               (route) => false,
             );
           }
-          if (index == 3) {
+          if (index == 2) {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
