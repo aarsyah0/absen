@@ -121,101 +121,117 @@ class _RiwayatScreenState extends State<RiwayatScreen>
   Widget _buildFilterBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => _pickDate(true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 12,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 150,
+              child: InkWell(
+                onTap: () => _pickDate(true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F9FB),
+                    border: Border.all(color: const Color(0xFFE3EAF2)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.date_range,
+                        size: 18,
+                        color: Color(0xFF4F8DFD),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _startDate == null
+                              ? 'Tanggal Mulai'
+                              : DateFormat('dd/MM/yyyy').format(_startDate!),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color:
+                                _startDate == null ? Colors.grey : Colors.black,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FB),
-                  border: Border.all(color: const Color(0xFFE3EAF2)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 150,
+              child: InkWell(
+                onTap: () => _pickDate(false),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F9FB),
+                    border: Border.all(color: const Color(0xFFE3EAF2)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.date_range,
+                        size: 18,
+                        color: Color(0xFF4F8DFD),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _endDate == null
+                              ? 'Tanggal Akhir'
+                              : DateFormat('dd/MM/yyyy').format(_endDate!),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color:
+                                _endDate == null ? Colors.grey : Colors.black,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _applyFilter,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4F8DFD),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.date_range,
-                      size: 18,
-                      color: Color(0xFF4F8DFD),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _startDate == null
-                          ? 'Tanggal Mulai'
-                          : DateFormat('dd/MM/yyyy').format(_startDate!),
-                      style: TextStyle(
-                        color: _startDate == null ? Colors.grey : Colors.black,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: InkWell(
-              onTap: () => _pickDate(false),
-              child: Container(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FB),
-                  border: Border.all(color: const Color(0xFFE3EAF2)),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.date_range,
-                      size: 18,
-                      color: Color(0xFF4F8DFD),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _endDate == null
-                          ? 'Tanggal Akhir'
-                          : DateFormat('dd/MM/yyyy').format(_endDate!),
-                      style: TextStyle(
-                        color: _endDate == null ? Colors.grey : Colors.black,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: _applyFilter,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F8DFD),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              child: const Text(
+                'Terapkan',
+                style: TextStyle(fontSize: 13, color: Colors.white),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            child: const Text(
-              'Terapkan',
-              style: TextStyle(fontSize: 13, color: Colors.white),
-            ),
-          ),
-          if (_startDate != null || _endDate != null)
-            IconButton(
-              icon: const Icon(Icons.clear, color: Colors.red),
-              onPressed: _clearFilter,
-              tooltip: 'Hapus Filter',
-            ),
-        ],
+            if (_startDate != null || _endDate != null)
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.red),
+                onPressed: _clearFilter,
+                tooltip: 'Hapus Filter',
+              ),
+          ],
+        ),
       ),
     );
   }

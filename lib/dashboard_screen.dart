@@ -8,6 +8,7 @@ import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'izin_screen.dart';
 import 'riwayat_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String userName;
@@ -43,6 +44,27 @@ class DashboardScreen extends StatelessWidget {
       return data.cast<Map<String, dynamic>>();
     } else {
       throw Exception('Gagal mengambil aktivitas');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchUpcomingPermissions(
+    String token,
+  ) async {
+    final today = DateTime.now();
+    final todayStr =
+        "${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+    final url = Uri.parse(
+      'http://localhost:8000/api/employee/permission/history?start_date=$todayStr&length=5',
+    );
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'] as List<dynamic>;
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Gagal mengambil izin mendatang');
     }
   }
 
@@ -444,43 +466,64 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 8),
               SizedBox(
                 height: 120,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  children: const [
-                    SizedBox(
-                      width: 220,
-                      child: _IzinCard(
-                        title: 'Cuti Tahunan',
-                        date: '15 - 17 Juni 2025',
-                        status: 'Menunggu',
-                        statusColor: Color(0xFFFFC542),
-                        description: 'Liburan keluarga ke Bali',
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    SizedBox(
-                      width: 220,
-                      child: _IzinCard(
-                        title: 'Izin Setengah Hari',
-                        date: '20 Juni 2025',
-                        status: 'Disetujui',
-                        statusColor: Color(0xFF1BCFB4),
-                        description: 'Urusan administrasi',
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    SizedBox(
-                      width: 220,
-                      child: _IzinCard(
-                        title: 'Izin Sakit',
-                        date: '25 Juni 2025',
-                        status: 'Ditolak',
-                        statusColor: Color(0xFFE57373),
-                        description: 'Demam tinggi',
-                      ),
-                    ),
-                  ],
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchUpcomingPermissions(token),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text('Gagal memuat izin mendatang'),
+                      );
+                    }
+                    final data = snapshot.data ?? [];
+                    if (data.isEmpty) {
+                      return const Center(
+                        child: Text('Tidak ada izin mendatang'),
+                      );
+                    }
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      itemCount: data.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, i) {
+                        final izin = data[i];
+                        final status = izin['status'] ?? '';
+                        Color statusColor;
+                        String statusText;
+                        if (status == 'pending') {
+                          statusColor = const Color(0xFFFFC542);
+                          statusText = 'Menunggu';
+                        } else if (status == 'accepted') {
+                          statusColor = const Color(0xFF1BCFB4);
+                          statusText = 'Disetujui';
+                        } else {
+                          statusColor = const Color(0xFFE57373);
+                          statusText = 'Ditolak';
+                        }
+                        final start = izin['start_date'] ?? '';
+                        final end = izin['end_date'] ?? '';
+                        String dateStr;
+                        if (start == end) {
+                          dateStr = start;
+                        } else {
+                          dateStr = '$start';
+                        }
+                        return SizedBox(
+                          width: 220,
+                          child: _IzinCard(
+                            title: izin['category'] ?? '-',
+                            date: dateStr,
+                            status: statusText,
+                            statusColor: statusColor,
+                            description: izin['reason'] ?? '-',
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 32),
@@ -516,7 +559,16 @@ class DashboardScreen extends StatelessWidget {
               (route) => false,
             );
           }
-          // Tambahkan navigasi ke halaman lain jika ada (Absensi, Profil)
+          if (index == 3) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileScreen(token: token),
+              ),
+              (route) => false,
+            );
+          }
+          // Tambahkan navigasi ke halaman lain jika ada (Absensi)
         },
       ),
     );
